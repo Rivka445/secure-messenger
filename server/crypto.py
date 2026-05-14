@@ -1,32 +1,8 @@
+from server.core.crypto import encrypt, decrypt
+
+__all__ = ["encrypt", "decrypt"]
 """
 crypto.py — AES-256-GCM encryption for messages stored in the database.
-
-╔══════════════════════════════════════════════════════════════╗
-║  THIS FILE IS COMPLETE — you do not need to change anything. ║
-║  Read it, understand it, then use encrypt() and decrypt()    ║
-║  in your routes.                                             ║
-╚══════════════════════════════════════════════════════════════╝
-
-HOW IT WORKS (the short version):
-  The server has one secret key (256 bits, generated at startup).
-  encrypt("hello") → scrambles the text into unreadable base64.
-  decrypt(blob)    → unscrambles it back to "hello".
-  Without the key, decryption is impossible.
-
-WHY AES-GCM AND NOT JUST AES?
-  GCM gives us two guarantees at once:
-    1. Confidentiality — the content is hidden.
-    2. Integrity      — if anyone tampers with the stored blob,
-                        decryption raises an exception instead of
-                        silently returning garbage.
-
-WHY A FRESH NONCE EVERY TIME?
-  Even if Alice sends "hello" ten times, each encrypted blob looks
-  completely different. An attacker watching the database cannot
-  detect repeated messages.
-
-  The nonce is NOT secret — it is stored alongside the ciphertext.
-  Its only job is to make each encryption unique.
 """
 
 import os
