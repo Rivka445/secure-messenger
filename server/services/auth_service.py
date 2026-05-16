@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from server.repositories import IUserRepository
 from server.core.auth import hash_password, verify_password, create_access_token
 from server.schemas import TokenResponse
+from sqlalchemy.exc import IntegrityError
 
 
 class IAuthService(Protocol):
@@ -41,7 +42,12 @@ class AuthService:
         """
         if self._repo.get_by_username(username):
             raise HTTPException(status_code=400, detail="username already taken")
-        self._repo.create(username, hash_password(password), email)
+        try:
+            self._repo.create(username, hash_password(password), email)
+        except IntegrityError:
+            # In case of race-condition or DB unique constraint violation,
+            # surface a 400 response instead of crashing the server.
+            raise HTTPException(status_code=400, detail="username already taken")
         return {"message": "user created successfully"}
 
     def login(self, username: str, password: str) -> TokenResponse:

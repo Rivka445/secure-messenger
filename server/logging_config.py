@@ -7,7 +7,11 @@ LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def configure_logging():
+def configure_logging() -> logging.Logger:
+    """Configure root logging: console + rotating file handler and return the logger.
+
+    Rotates logs at 5MB and keeps 5 backups.
+    """
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 

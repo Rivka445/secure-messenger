@@ -60,6 +60,14 @@ class GroupRepository:
     def get_members(self, group_id: int) -> List[GroupMember]:
         return self._db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
 
+    def get_groups_for_user(self, username: str) -> List[Group]:
+        return (
+            self._db.query(Group)
+            .join(GroupMember, Group.id == GroupMember.group_id)
+            .filter(GroupMember.username == username)
+            .all()
+        )
+
     def create_group_message(self, group_id: int, sender: str, ciphertext: str) -> GroupMessage:
         msg = GroupMessage(group_id=group_id, sender=sender, ciphertext=ciphertext)
         self._db.add(msg)
@@ -67,21 +75,28 @@ class GroupRepository:
         self._db.refresh(msg)
         return msg
 
+    def get_group_messages(self, group_id: int) -> List[GroupMessage]:
+        return self._db.query(GroupMessage).filter(GroupMessage.group_id == group_id).order_by(GroupMessage.id).all()
+
     # Join request methods
-    def create_join_request(self, group_id: int, username: str, message: str | None, provided_password_ok: bool):
+    def create_join_request(self, group_id: int, username: str, message: str | None, provided_password_ok: bool) -> GroupJoinRequest:
+        """Create a pending join request row for the given user and group."""
         req = GroupJoinRequest(group_id=group_id, username=username, message=message, provided_password_ok=provided_password_ok)
         self._db.add(req)
         self._db.commit()
         self._db.refresh(req)
         return req
 
-    def list_join_requests(self, group_id: int):
+    def list_join_requests(self, group_id: int) -> list[GroupJoinRequest]:
+        """Return pending join requests for a group."""
         return self._db.query(GroupJoinRequest).filter(GroupJoinRequest.group_id == group_id, GroupJoinRequest.status == "pending").all()
 
-    def get_join_request(self, request_id: int):
+    def get_join_request(self, request_id: int) -> GroupJoinRequest | None:
+        """Return a join request by id or None if not found."""
         return self._db.query(GroupJoinRequest).filter(GroupJoinRequest.id == request_id).first()
 
-    def update_join_request_status(self, request_id: int, status: str, processed_by: str | None = None):
+    def update_join_request_status(self, request_id: int, status: str, processed_by: str | None = None) -> GroupJoinRequest | None:
+        """Update status of a join request and return the updated object or None."""
         req = self.get_join_request(request_id)
         if not req:
             return None

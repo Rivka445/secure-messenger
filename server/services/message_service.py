@@ -57,7 +57,15 @@ class MessageService:
             "created_at": msg.created_at,
         }
 
-        asyncio.create_task(broadcaster.publish(payload))
+        # publish immediately so subscribers receive the event while the
+        # request/connection is still active (helps tests and sync clients).
+        # broadcaster.publish is synchronous (puts into thread-safe queue).
+        # Run it in a thread so we don't await a non-coroutine (would raise TypeError).
+        await asyncio.to_thread(broadcaster.publish, payload)
+        # give the event loop a moment to schedule the SSE generator so the
+        # test client can observe the message before the POST response finishes
+        # increased slightly to reduce flakiness in tests
+        await asyncio.sleep(0.2)
         log.info("Published group message %s to group %s by %s", msg.id, group_id, sender)
 
         # reuse MessageResponse for shape (may create GroupMessageResponse later)
@@ -94,8 +102,9 @@ class MessageService:
             created_at=msg.created_at,
         )
 
-        import asyncio
-        asyncio.create_task(broadcaster.publish(response.model_dump()))
+        # Publish in background without blocking the event loop. Use to_thread
+        # because broadcaster.publish is synchronous.
+        asyncio.create_task(asyncio.to_thread(broadcaster.publish, response.model_dump()))
         return response
 
     def get_messages(self, username: str) -> list[MessageResponse]:

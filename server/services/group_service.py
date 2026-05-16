@@ -28,12 +28,20 @@ class GroupService:
         except Exception:
             log.debug("Failed to invalidate membership cache for %s in %s", owner, group.id)
         log.info("Created group %s (id=%s) by owner=%s", name, group.id, owner)
-        return {"id": group.id, "name": group.name, "owner": group.owner}
+        # include created_at so response_model (GroupResponse) can validate
+        return {
+            "id": group.id,
+            "name": group.name,
+            "owner": group.owner,
+            "created_at": group.created_at,
+        }
 
     def request_join(self, group_id: int, username: str, password: Optional[str], message: Optional[str]) -> dict:
         group = self._groups.get_by_id(group_id)
         if not group:
             raise app_exceptions.NotFoundError("group not found")
+        if self._groups.is_member(group_id, username):
+            return {"id": 0, "status": "approved"}
         provided_ok = False
         if group.join_password_hash:
             if not password:
@@ -43,7 +51,11 @@ class GroupService:
         else:
             provided_ok = True
         req = self._groups.create_join_request(group_id, username, message, provided_ok)
-        log.info("User %s requested to join group %s (request_id=%s)", username, group_id, req.id)
+        if provided_ok:
+            self._groups.add_member(group_id, username)
+            self._groups.update_join_request_status(req.id, "approved", processed_by="auto")
+            req.status = "approved"
+        log.info("User %s requested to join group %s (request_id=%s, auto_approved=%s)", username, group_id, req.id, provided_ok)
         return {"id": req.id, "status": req.status}
 
     def approve_request(self, request_id: int, approver: str) -> dict:

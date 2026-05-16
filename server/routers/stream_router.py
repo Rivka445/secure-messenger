@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from typing import AsyncGenerator, Dict, Any
+import queue as std_queue
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -17,39 +17,21 @@ router = APIRouter(tags=["stream"])
 
 
 @router.get("/stream")
-async def message_stream(username: str = Depends(require_auth), group_repo: GroupRepository = Depends(get_group_repo)) -> StreamingResponse:
-    """
-    Server-Sent Events (SSE) endpoint that streams messages to an authenticated user.
+async def message_stream(username: str = Depends(require_auth), group_repo: GroupRepository = Depends(get_group_repo)):
+    q: std_queue.Queue = broadcaster.subscribe()
 
-    This endpoint subscribes the current user to the central broadcaster queue and
-    yields messages over an HTTP event-stream. Only messages where the user is the
-    sender or the recipient are sent to the client. Timestamps on messages are
-    converted to ISO strings if they are not already strings.
-
-    Parameters:
-    - username: the authenticated username provided by the `require_auth` dependency
-
-    Returns:
-    - StreamingResponse: a FastAPI StreamingResponse configured for "text/event-stream"
-    """
-    queue = await broadcaster.subscribe()
-
-    async def event_generator() -> AsyncGenerator[str, None]:
-        """Generate SSE-formatted strings for messages relevant to `username`.
-
-        Yields strings in the SSE format, for example: 'data: {...}\n\n'. The
-        generator listens on the broadcaster queue until cancelled, at which
-        point it will unsubscribe the queue.
-        """
+    async def event_generator():
         try:
             while True:
-                message: Dict[str, Any] = await queue.get()
-                # direct messages keep existing behavior
+                try:
+                    message = await asyncio.to_thread(q.get, True, 1.0)
+                except std_queue.Empty:
+                    continue
+
                 if message.get("type") == "group":
                     group_id = message.get("group_id")
                     if group_id is None:
                         continue
-                    # check cache first
                     cached = membership_cache.get(group_id, username)
                     if cached is None:
                         is_mem = await asyncio.to_thread(group_repo.is_member, group_id, username)
@@ -68,6 +50,6 @@ async def message_stream(username: str = Depends(require_auth), group_repo: Grou
         except asyncio.CancelledError:
             log.info(f"Stream closed for user: {username}")
         finally:
-            await broadcaster.unsubscribe(queue)
+            broadcaster.unsubscribe(q)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

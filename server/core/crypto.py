@@ -1,9 +1,11 @@
 import os
 import base64
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from typing import Any
+from dotenv import load_dotenv
 
-_KEY: bytes = os.urandom(32)
+load_dotenv()
+
+_KEY: bytes = bytes.fromhex(os.getenv("ENCRYPTION_KEY"))
 
 
 def encrypt(plaintext: str) -> str:
