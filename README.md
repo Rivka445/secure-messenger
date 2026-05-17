@@ -162,12 +162,50 @@ docker build -t secure-messenger:latest .
 docker run -e DATABASE_URL="sqlite:///./messenger.db" -p 8000:8000 secure-messenger:latest
 ```
 
-Deployment notes
-----------------
+AWS deployment (RDS + Secrets Manager) — quick guide
+-------------------------------------------------
 
-- For production use Postgres (set `DATABASE_URL` accordingly) and ensure `psycopg2` or `psycopg2-binary` is available.
-- Replace the in-process broadcaster with Redis Pub/Sub for multi-instance SSE delivery.
-- Run Alembic migrations during deployment.
+This project can run against an AWS RDS Postgres instance. The high-level steps are:
+
+- Create an RDS Postgres instance in your desired AWS region. Note the endpoint (HOST), port (usually 5432), database name (DBNAME), username and password.
+- Create a secret in AWS Secrets Manager (or SSM Parameter Store) to store the DB credentials and any JWT secrets. Store either the full SQLAlchemy DATABASE_URL or the individual fields.
+- In your deployment environment (ECS task, Elastic Beanstalk, App Runner, EC2), set the environment variables the app expects:
+	- `DATABASE_URL` — SQLAlchemy connection string, example:
+		`postgresql+psycopg2://user:pass@host:5432/dbname`
+	- `ALLOWED_ORIGINS` — comma-separated allowed CORS origins (e.g. `https://your-frontend.example.com`)
+	- `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` — JWT config used by `server/core/auth.py` (if not set, the app may fail at startup)
+
+- Security groups / networking: ensure the RDS instance's security group allows inbound connections from the network where your app runs (for example the ECS/EB security group or VPC CIDR). If your app runs in the same VPC, prefer referencing the app's security group in the RDS inbound rule.
+
+- Use IAM roles for your compute environment (ECS task role, EC2 instance role, EB instance profile) to grant access to Secrets Manager so your app can fetch secrets at runtime. Alternatively, inject the env vars at deployment time from your CI/CD pipeline.
+
+AWS CLI example snippets (replace placeholders):
+
+1) Create a simple secret containing the DATABASE_URL (Secrets Manager):
+
+aws secretsmanager create-secret --name secure-messenger/db --secret-string '{"DATABASE_URL":"postgresql+psycopg2://user:pass@host:5432/dbname"}' --region us-east-1
+
+2) When configuring your ECS Task Definition / Elastic Beanstalk environment, set the `DATABASE_URL` env var from the secret or point your app's startup script to retrieve it from Secrets Manager.
+
+Notes and recommendations
+- Add `psycopg2-binary==2.9.6` to `requirements.txt` (done) so the runtime can connect to Postgres without needing system build deps. If you prefer `psycopg2`, ensure the build image includes libpq-dev and Python headers.
+- Store sensitive values (DB password, SECRET_KEY) in Secrets Manager or Parameter Store rather than plaintext env vars in your repo.
+- Make sure to run Alembic migrations after deploying so the database schema is up-to-date. You can run migrations as a pre-start step in your container or via a CI job.
+
+Client / frontend notes
+- The frontend reads `VITE_API_URL` at build time (see `client-app/src/api.js`). When building your production frontend, set `VITE_API_URL=https://api.yourdomain.com` so the compiled JS points to the production API.
+
+Example environment variables to configure in production
+
+- `DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/dbname`
+- `ALLOWED_ORIGINS=https://your-frontend.example.com`
+- `SECRET_KEY=<your-jwt-secret>`
+- `ALGORITHM=HS256` (or your chosen algorithm)
+- `ACCESS_TOKEN_EXPIRE_MINUTES=60`
+
+If you'd like, I can prepare:
+- AWS CLI commands / CloudFormation or Terraform snippets to create the RDS instance and Secrets Manager secret.
+- A small startup script that fetches secrets from Secrets Manager and exports them as env vars before running `uvicorn`.
 
 Testing
 -------
