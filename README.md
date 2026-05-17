@@ -1,7 +1,5 @@
 # Secure Messenger
 
-# Secure Messenger
-
 Project summary
 ---------------
 Secure Messenger is a small educational chat app demonstrating a REST API (FastAPI) with realtime server→client updates (SSE). It includes JWT authentication, direct and group messaging, and database migrations via Alembic.
@@ -9,16 +7,6 @@ Secure Messenger is a small educational chat app demonstrating a REST API (FastA
 - `Procfile` — process command for Procfile-based platforms.
 
 ---
-
-## API endpoints (concise reference)
-
-Auth
-- `POST /register` — register a new user. Example payload: `{ "username": "u", "password": "p", "email": "e" }`.
-- `POST /login` — authenticate and receive JWT access token. Example payload: `{ "username": "u", "password": "p" }`.
-
-# Secure Messenger
-
-Secure Messenger is a small educational chat application that demonstrates a simple, secure messaging backend and a single-page frontend. It is intended for learning and experimentation.
 
 Key features
 ------------
