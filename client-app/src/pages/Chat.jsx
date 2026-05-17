@@ -170,8 +170,9 @@ export default function Home() {
 
   return (
     <div style={s.page}>
+      <div style={s.container}>
       {/* Sidebar */}
-      <div style={s.sidebar}>
+  <div style={s.sidebar}>
         <div style={s.sidebarTop}>
           <span style={s.appName}>💬 Messenger</span>
           <button style={s.logoutBtn} onClick={() => { localStorage.removeItem('openedDMs'); logout(); navigate('/login') }}>Logout</button>
@@ -220,7 +221,7 @@ export default function Home() {
       </div>
 
       {/* Main */}
-      <div style={s.main}>
+  <div style={s.mainPanel}>
         {!active ? (
           <div style={s.empty}>Select a conversation or start a new one</div>
         ) : (
@@ -310,49 +311,149 @@ export default function Home() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
 
 const s = {
-  page: { display: 'flex', height: '100vh', fontFamily: 'sans-serif', background: '#f0f2f5' },
-  sidebar: { width: 260, background: '#1e1e2e', display: 'flex', flexDirection: 'column', color: '#cdd6f4', overflowY: 'auto' },
-  sidebarTop: { padding: '14px 12px 6px', borderBottom: '1px solid #313244', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#1e1e2e', zIndex: 1 },
-  appName: { fontWeight: 700, fontSize: 15 },
-  logoutBtn: { background: 'none', border: '1px solid #45475a', color: '#cdd6f4', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: 11 },
-  meLabel: { padding: '4px 14px 8px', fontSize: 12, color: '#6c7086' },
-  section: { padding: '8px 0' },
-  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 14px 4px', fontSize: 11, fontWeight: 700, color: '#6c7086', textTransform: 'uppercase', letterSpacing: 1 },
-  addBtn: { background: 'none', border: 'none', color: '#6c7086', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px' },
-  item: { width: '100%', background: 'none', border: 'none', color: '#cdd6f4', padding: '7px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' },
-  itemActive: { background: '#313244' },
-  avatar: { width: 30, height: 30, borderRadius: '50%', background: '#89b4fa', color: '#1e1e2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 },
-  itemName: { fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 },
-  ownerBadge: { fontSize: 10, background: '#a6e3a1', color: '#1e1e2e', borderRadius: 4, padding: '1px 4px', flexShrink: 0 },
+  page: {
+    display: 'flex',
+    height: '100vh',
+    fontFamily: "Inter, 'Segoe UI', Roboto, sans-serif",
+    background: 'linear-gradient(180deg, #f7fbff 0%, #f3f7fb 100%)',
+  },
+  sidebar: {
+    width: 300,
+    background: 'linear-gradient(180deg, #4f46e5 0%, #7c3aed 100%)',
+    display: 'flex',
+    flexDirection: 'column',
+    color: '#f8fafc',
+    overflowY: 'auto',
+    boxShadow: 'none',
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+  },
+  sidebarTop: {
+    padding: '18px 16px',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'sticky',
+    top: 0,
+    background: 'transparent',
+    zIndex: 1,
+  },
+  appName: { fontWeight: 800, fontSize: 16, letterSpacing: 0.2 },
+  logoutBtn: {
+    background: 'rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.16)',
+    color: '#fff',
+    borderRadius: 10,
+    padding: '6px 10px',
+    cursor: 'pointer',
+    fontSize: 12,
+  },
+  meLabel: { padding: '8px 16px', fontSize: 13, color: 'rgba(255,255,255,0.9)' },
+  section: { padding: '10px 0' },
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '6px 16px',
+    fontSize: 12,
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.85)',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  addBtn: { background: 'rgba(255,255,255,0.06)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '6px 8px', borderRadius: 8 },
+  item: {
+    width: '100%',
+    background: 'transparent',
+    border: 'none',
+    color: '#fff',
+    padding: '10px 16px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    textAlign: 'left',
+    transition: 'background 180ms ease',
+  },
+  itemActive: { background: 'rgba(255,255,255,0.06)' },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg,#ff7ab6 0%,#7c3aed 100%)',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 700,
+    fontSize: 14,
+    flexShrink: 0,
+  },
+  itemName: { fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 },
+  ownerBadge: { fontSize: 11, background: 'rgba(255,255,255,0.12)', color: '#fff', borderRadius: 6, padding: '2px 6px', flexShrink: 0 },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  empty: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: 16 },
-  chatHeader: { padding: '12px 20px', borderBottom: '1px solid #ddd', background: '#fff', display: 'flex', alignItems: 'baseline', gap: 12 },
-  chatTitle: { fontWeight: 700, fontSize: 17 },
-  chatSub: { fontSize: 12, color: '#888' },
-  messages: { flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 6 },
-  noMsg: { color: '#aaa', textAlign: 'center', marginTop: 40 },
+
+  /* container wraps sidebar + main to create a centered card */
+  container: {
+    width: 'min(1100px, 96%)',
+    height: '92vh',
+    margin: '4vh auto',
+    display: 'flex',
+    borderRadius: 14,
+    overflow: 'hidden',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.8), rgba(248,250,252,0.7))',
+    boxShadow: '0 20px 60px rgba(2,6,23,0.12)',
+    border: '1px solid rgba(15,23,42,0.06)',
+  },
+
+  /* give the main panel a soft right-side radius and subtle background */
+  mainPanel: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderTopRightRadius: 14, borderBottomRightRadius: 14, background: 'linear-gradient(180deg,#ffffff,#fbfdff)' },
+  empty: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: 16 },
+  chatHeader: { padding: '16px 22px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'linear-gradient(90deg,#ffffff, #fbfdff)', display: 'flex', alignItems: 'baseline', gap: 12 },
+  chatTitle: { fontWeight: 800, fontSize: 18, color: '#0f172a' },
+  chatSub: { fontSize: 12, color: '#6b7280' },
+  messages: { flex: 1, overflowY: 'auto', padding: '18px 24px', display: 'flex', flexDirection: 'column', gap: 8, background: 'transparent' },
+  noMsg: { color: '#9ca3af', textAlign: 'center', marginTop: 40 },
   msgRow: { display: 'flex' },
-  msgWrap: { display: 'flex', flexDirection: 'column', maxWidth: '65%' },
-  sender: { fontSize: 11, color: '#666', marginBottom: 2, paddingLeft: 4 },
-  bubble: { padding: '8px 14px', borderRadius: 18, fontSize: 14, lineHeight: 1.4 },
-  bubbleMe: { background: '#0084ff', color: '#fff', borderBottomRightRadius: 4 },
-  bubbleThem: { background: '#fff', color: '#111', borderBottomLeftRadius: 4, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' },
-  inputRow: { display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid #ddd', background: '#fff' },
-  input: { padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, outline: 'none' },
-  sendBtn: { background: '#0084ff', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontWeight: 600 },
-  error: { color: 'red', margin: '0 16px 8px', fontSize: 13 },
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { background: '#fff', borderRadius: 12, padding: 28, width: 320, display: 'flex', flexDirection: 'column', gap: 12 },
-  modalTitle: { margin: 0, fontSize: 18 },
+  msgWrap: { display: 'flex', flexDirection: 'column', maxWidth: '72%', gap: 6 },
+  sender: { fontSize: 12, color: '#6b7280', marginBottom: 6, paddingLeft: 6 },
+  bubble: { padding: '10px 16px', borderRadius: 18, fontSize: 15, lineHeight: 1.4, wordBreak: 'break-word' },
+  bubbleMe: {
+    background: 'linear-gradient(135deg,#7c3aed 0%,#06b6d4 100%)',
+    color: '#fff',
+    borderBottomRightRadius: 8,
+    borderTopRightRadius: 18,
+    borderTopLeftRadius: 18,
+    boxShadow: '0 10px 30px rgba(124,58,237,0.12)'
+  },
+  bubbleThem: {
+    background: '#ffffff',
+    color: '#0f172a',
+    border: '1px solid rgba(15,23,42,0.04)',
+    borderBottomLeftRadius: 8,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    boxShadow: '0 6px 20px rgba(2,6,23,0.04)'
+  },
+  inputRow: { display: 'flex', gap: 12, padding: '14px 18px', borderTop: '1px solid rgba(15,23,42,0.04)', background: 'linear-gradient(90deg,#ffffff, #fbfdff)', alignItems: 'center' },
+  input: { padding: '12px 16px', borderRadius: 14, border: '1px solid rgba(15,23,42,0.06)', fontSize: 15, outline: 'none', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)' },
+  sendBtn: { background: 'linear-gradient(90deg,#ff7ab6,#7c3aed)', color: '#fff', border: 'none', borderRadius: 14, padding: '10px 22px', cursor: 'pointer', fontWeight: 800, boxShadow: '0 12px 34px rgba(124,58,237,0.12)' },
+  error: { color: '#ef4444', margin: '0 18px 10px', fontSize: 13 },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modal: { background: '#ffffff', borderRadius: 14, padding: 28, width: 360, display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 12px 40px rgba(2,6,23,0.16)' },
+  modalTitle: { margin: 0, fontSize: 18, color: '#0f172a' },
   modalForm: { display: 'flex', flexDirection: 'column', gap: 10 },
-  modalInput: { padding: '9px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, outline: 'none' },
-  modalBtn: { background: '#0084ff', color: '#fff', border: 'none', borderRadius: 8, padding: 10, cursor: 'pointer', fontWeight: 600, fontSize: 15 },
-  groupSearchList: { maxHeight: 180, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, display: 'flex', flexDirection: 'column' },
-  groupSearchItem: { background: 'none', border: 'none', padding: '8px 12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', textAlign: 'left', borderBottom: '1px solid #f0f0f0' },
-  groupSearchItemActive: { background: '#e8f0fe' },
+  modalInput: { padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(15,23,42,0.06)', fontSize: 14, outline: 'none' },
+  modalBtn: { background: 'linear-gradient(90deg,#7c3aed,#06b6d4)', color: '#fff', border: 'none', borderRadius: 10, padding: 10, cursor: 'pointer', fontWeight: 700, fontSize: 15 },
+  groupSearchList: { maxHeight: 220, overflowY: 'auto', border: '1px solid rgba(15,23,42,0.04)', borderRadius: 10, display: 'flex', flexDirection: 'column' },
+  groupSearchItem: { background: 'transparent', border: 'none', padding: '10px 14px', cursor: 'pointer', display: 'flex', flexDirection: 'column', textAlign: 'left', borderBottom: '1px solid rgba(15,23,42,0.03)' },
+  groupSearchItemActive: { background: 'rgba(59,130,246,0.06)' },
 }
+

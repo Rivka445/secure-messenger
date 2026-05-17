@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+venv/
+env/
+
+# Node
+node_modules/
+client-app/node_modules/
+
+# Logs
+logs/
+*.log
+
+# Git
+.git
+
+# OS
+.DS_Store
+Thumbs.db
