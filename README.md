@@ -1,148 +1,10 @@
 # Secure Messenger
 
-This repository contains a simple chat application with a FastAPI backend and a React + Vite frontend.
-
-Purpose: provide a concise, factual reference describing project layout, API endpoints, environment variables, local run/build commands, and deployment notes.
-
----
-
-## Repository layout (files and purpose)
-
-- `server/` — backend implementation (FastAPI)
-  - `server/main.py` — FastAPI app setup, router registration, CORS setup (reads `ALLOWED_ORIGINS`).
-  - `server/database.py` — SQLAlchemy engine/session (reads `DATABASE_URL`).
-  - `server/routers/` — API routers: `auth_router.py`, `message_router.py`, `stream_router.py`, `group_router.py`.
-  - `server/core/` — utilities: `auth.py`, `broadcaster.py`, `membership_cache.py`.
-  - `server/services/` — business logic for auth, messages, groups.
-  - `server/repositories/` — DB access wrappers.
-- `migrations/` and `alembic.ini` — Alembic migration scripts and configuration.
-- `client-app/` — React + Vite frontend
-  - `client-app/src/api.js` — central API client; uses `import.meta.env.VITE_API_URL || '/'`.
-  - `client-app/src/pages/Chat.jsx` — chat UI, message list and input, SSE integration.
-  - `client-app/src/pages/Login.jsx`, `Register.jsx` — auth pages.
-- `requirements.txt` — Python dependencies.
-- `pyproject.toml` — optional project metadata.
-- `Dockerfile`, `.dockerignore` — container build files.
-- `Procfile` — process command for Procfile-based platforms.
-
----
-
-## API endpoints (concise reference)
-
-Auth
-- `POST /register` — register a new user. Example payload: `{ "username": "u", "password": "p", "email": "e" }`.
-- `POST /login` — authenticate and receive JWT access token. Example payload: `{ "username": "u", "password": "p" }`.
-
-Messages
-- `GET /messages` — list messages for the authenticated user. Requires Authorization header.
-- `POST /messages` — send a message. Typical payload includes `content` and either `recipient_id` or `group_id`.
-
-Groups
-- `GET /groups` — list groups.
-- `GET /groups/my` — list groups for the authenticated user.
-- `POST /groups` — create a group.
-- `POST /groups/{id}/join` — request to join a group.
-- `GET /groups/{id}/messages` — get group history.
-
-Realtime
-- `GET /stream` — SSE endpoint. Requires `Authorization: Bearer <token>` header. Response `Content-Type: text/event-stream`.
-
----
-
-## Environment variables used by the server
-
-- `DATABASE_URL` — SQLAlchemy connection string. Examples:
-  - Local sqlite: `sqlite:///./messenger.db`
-  - Postgres: `postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME`
-- `ALLOWED_ORIGINS` — comma-separated origins for CORS (e.g. `http://localhost:5173,https://app.example.com`).
-- `PORT` — optional port used by the `Procfile` or container runtime.
-
----
-
-## Exact commands — local development
-
-Backend (PowerShell commands):
-
-```powershell
-python -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
-pip install -r requirements.txt
-# run server with sqlite
-$env:DATABASE_URL = 'sqlite:///./messenger.db'
-uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Frontend (PowerShell):
-
-```powershell
-cd client-app
-npm install
-npm run dev
-```
-
-Build frontend with production API base URL:
-
-```powershell
-cd client-app
-VITE_API_URL=https://api.example.com/ npm run build
-```
-
-Docker — build and run backend container:
-
-```powershell
-docker build -t secure-messenger:latest .
-docker run -e DATABASE_URL="sqlite:///./messenger.db" -p 8000:8000 secure-messenger:latest
-```
-
-Alembic migrations (run where `alembic` is available and `DATABASE_URL` is set):
-
-```powershell
-alembic upgrade head
-```
-
----
-
-## Notes on realtime (SSE) implementation
-
-- The backend publishes message events to an in-process `broadcaster` when messages are created.
-- The `/stream` endpoint subscribes to the broadcaster and sends matching events to the connected client as SSE (`text/event-stream`).
-- For horizontal scaling, a central broker (Redis Pub/Sub or similar) is required so events published on one instance are received by subscribers connected to other instances.
-
----
-
-## Minimal troubleshooting
-
-- If the backend cannot connect to the DB: confirm `DATABASE_URL`, network access, and DB credentials.
-- If `psycopg2` fails to install on some platforms: either install OS-level libpq headers or use `psycopg2-binary` in `requirements.txt`.
-- If SSE appears buffered by a proxy: verify load balancer/reverse proxy streaming config.
-
----
-
-If specific sections must be expanded into exact request/response examples or the full API JSON schemas, list which endpoints you want expanded and the README will be updated with those exact examples.
 # Secure Messenger
 
-This repository contains a simple chat application with a FastAPI backend and a React + Vite frontend.
-
-This README provides a factual reference: main files, API endpoints, environment variables, and exact commands to run and build the project locally.
-
----
-
-## Repository layout (files and purpose)
-
-- `server/` — backend implementation (FastAPI)
-  - `server/main.py` — FastAPI app setup, router registration, CORS setup (reads `ALLOWED_ORIGINS`).
-  - `server/database.py` — SQLAlchemy engine/session (reads `DATABASE_URL`).
-  - `server/routers/` — API routers: `auth_router.py`, `message_router.py`, `stream_router.py`, `group_router.py`.
-  - `server/core/` — utilities: `auth.py`, `broadcaster.py`, `membership_cache.py`.
-  - `server/services/` — business logic for auth, messages, groups.
-  - `server/repositories/` — DB access wrappers.
-- `migrations/` and `alembic.ini` — Alembic migration scripts and configuration.
-- `client-app/` — React + Vite frontend
-  - `client-app/src/api.js` — central API client; uses `import.meta.env.VITE_API_URL || '/'`.
-  - `client-app/src/pages/Chat.jsx` — chat UI, message list and input, SSE integration.
-  - `client-app/src/pages/Login.jsx`, `Register.jsx` — auth pages.
-- `requirements.txt` — Python dependencies.
-- `pyproject.toml` — optional project metadata.
+Project summary
+---------------
+Secure Messenger is a small educational chat app demonstrating a REST API (FastAPI) with realtime server→client updates (SSE). It includes JWT authentication, direct and group messaging, and database migrations via Alembic.
 - `Dockerfile`, `.dockerignore` — container build files.
 - `Procfile` — process command for Procfile-based platforms.
 
@@ -154,152 +16,118 @@ Auth
 - `POST /register` — register a new user. Example payload: `{ "username": "u", "password": "p", "email": "e" }`.
 - `POST /login` — authenticate and receive JWT access token. Example payload: `{ "username": "u", "password": "p" }`.
 
-Messages
-- `GET /messages` — list messages for the authenticated user. Requires Authorization header.
-- `POST /messages` — send a message. Typical payload includes `content` and either `recipient_id` or `group_id`.
+# Secure Messenger
 
-Groups
-- `GET /groups` — list groups.
-- `GET /groups/my` — list groups for the authenticated user.
-- `POST /groups` — create a group.
-- `POST /groups/{id}/join` — request to join a group.
-- `GET /groups/{id}/messages` — get group history.
+Secure Messenger is a small educational chat application that demonstrates a simple, secure messaging backend and a single-page frontend. It is intended for learning and experimentation.
 
-Realtime
-- `GET /stream` — SSE endpoint. Requires `Authorization: Bearer <token>` header. Response `Content-Type: text/event-stream`.
+Key features
+------------
 
----
+- JWT-based authentication
+- Direct and group messages
+- Realtime server→client updates via Server-Sent Events (SSE)
+- Layered backend structure (routers → services → repositories)
+- Database migrations using Alembic
 
-## Environment variables used by the server
+Repository layout
+-----------------
 
-- `DATABASE_URL` — SQLAlchemy connection string. Examples:
-  - Local sqlite: `sqlite:///./messenger.db`
-  - Postgres: `postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME`
-- `ALLOWED_ORIGINS` — comma-separated origins for CORS (e.g. `http://localhost:5173,https://app.example.com`).
-- `PORT` — optional port used by the `Procfile` or container runtime.
+- `server/` — FastAPI backend
+	- `main.py` — application factory, CORS and startup
+	- `database.py` — SQLAlchemy engine and session helpers (reads `DATABASE_URL`)
+	- `routers/` — HTTP routes: auth, messages, groups, stream
+	- `services/`, `repositories/`, `core/` — business logic and utilities
+- `client-app/` — React + Vite single-page app
+	- `src/api.js` — API client (reads `VITE_API_URL` at build time)
+	- `src/pages/Chat.jsx`, `Login.jsx`, `Register.jsx` — main UI pages
+- `migrations/`, `alembic.ini` — Alembic migration files
+- `Dockerfile`, `.dockerignore` — optional containerization files
+- `requirements.txt`, `pyproject.toml` — Python dependencies and metadata
 
----
+Architecture & design
+---------------------
 
-## Exact commands — local development
+This project follows a simple layered architecture to keep responsibilities separate and make the code easy to follow:
 
-Backend (PowerShell commands):
+- Frontend (client-app): a React + Vite single-page application. It authenticates with the backend using JWT, calls REST endpoints via `src/api.js`, and connects to the SSE `/stream` endpoint to receive realtime events.
 
-```powershell
-python -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
-pip install -r requirements.txt
-# run server with sqlite
-$env:DATABASE_URL = 'sqlite:///./messenger.db'
-uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
+- Backend (server): FastAPI application organized into routers, services and repositories:
+	- Routers translate HTTP requests into service calls and perform request validation.
+	- Services implement business logic (authorization checks, composing messages, group operations).
+	- Repositories encapsulate direct database access via SQLAlchemy models and sessions.
 
-Frontend (PowerShell):
+- Realtime delivery: Server-Sent Events (SSE) endpoint implemented under `routers/stream_router.py`. The project includes an in-process broadcaster for development; for multi-instance deployments replace it with a Redis-based pub/sub so instances can broadcast across process boundaries.
 
-```powershell
-cd client-app
-npm install
-npm run dev
-```
+- Database & migrations: SQLAlchemy is used for ORM models and Alembic for schema migrations. Use `DATABASE_URL` to point to SQLite locally or to a Postgres instance in production.
 
-Build frontend with production API base URL:
+- Authentication: JWT-based tokens are issued at login and required for protected endpoints and for connecting to the SSE stream.
 
-```powershell
-cd client-app
-VITE_API_URL=https://api.example.com/ npm run build
-```
+Quick API reference
+-------------------
 
-Docker — build and run backend container:
-
-```powershell
-docker build -t secure-messenger:latest .
-docker run -e DATABASE_URL="sqlite:///./messenger.db" -p 8000:8000 secure-messenger:latest
-```
-
-Alembic migrations (run where `alembic` is available and `DATABASE_URL` is set):
-
-```powershell
-alembic upgrade head
-```
-
----
-
-## Notes on realtime (SSE) implementation
-
-- The backend publishes message events to an in-process `broadcaster` when messages are created.
-- The `/stream` endpoint subscribes to the broadcaster and sends matching events to the connected client as SSE (`text/event-stream`).
-- For horizontal scaling, a central broker (Redis Pub/Sub or similar) is required so events published on one instance are received by subscribers connected to other instances.
-
----
-
-## Minimal troubleshooting
-
-- If the backend cannot connect to the DB: confirm `DATABASE_URL`, network access, and DB credentials.
-- If `psycopg2` fails to install on some platforms: either install OS-level libpq headers or use `psycopg2-binary` in `requirements.txt`.
-- If SSE appears buffered by a proxy: verify load balancer/reverse proxy streaming config.
-
----
-
-If specific sections must be expanded into exact request/response examples or the full API JSON schemas, list which endpoints you want expanded and the README will be updated with those exact examples.
-  - `server/services/` — business logic for auth, messages, groups.
-  - `server/repositories/` — DB access wrappers.
-- `migrations/` and `alembic.ini` — Alembic migration scripts and configuration.
-- `client-app/` — React + Vite frontend
-  - `client-app/src/api.js` — central API client; uses `import.meta.env.VITE_API_URL || '/'`.
-  - `client-app/src/pages/Chat.jsx` — chat UI, message list and input, SSE integration.
-  - `client-app/src/pages/Login.jsx`, `Register.jsx` — auth pages.
-- `requirements.txt` — Python dependencies.
-- `pyproject.toml` — optional project metadata.
-- `Dockerfile`, `.dockerignore` — container build files.
-- `Procfile` — process command for Procfile-based platforms.
-
----
-
-## API endpoints (concise reference)
+The project exposes a REST API for auth, messaging and groups and a SSE endpoint for realtime events. Below are representative examples; consult the code for full schemas.
 
 Auth
-- `POST /register` — register a new user. Example payload: `{ "username": "u", "password": "p", "email": "e" }`.
-- `POST /login` — authenticate and receive JWT access token. Example payload: `{ "username": "u", "password": "p" }`.
+
+- POST /register
+	- Body: `{ "username": "alice", "email": "alice@example.com", "password": "secret" }`
+	- Success: 201 Created (user data without password)
+
+- POST /login
+	- Body: `{ "username": "alice", "password": "secret" }`
+	- Success: 200 OK `{ "access_token": "<jwt>", "token_type": "bearer" }`
 
 Messages
-- `GET /messages` — list messages for the authenticated user. Requires Authorization header.
-- `POST /messages` — send a message. Typical payload includes `content` and either `recipient_id` or `group_id`.
+
+- GET /messages
+	- Requires Authorization header. Returns messages for the authenticated user.
+
+- POST /messages
+	- Requires Authorization header.
+	- Direct message example: `{ "recipient_id": 2, "content": "Hello" }`
+	- Group message example: `{ "group_id": 5, "content": "Hello group" }`
+	- Success: 201 Created (message object)
 
 Groups
-- `GET /groups` — list groups.
-- `GET /groups/my` — list groups for the authenticated user.
-- `POST /groups` — create a group.
-- `POST /groups/{id}/join` — request to join a group.
-- `GET /groups/{id}/messages` — get group history.
 
-Realtime
-- `GET /stream` — SSE endpoint. Requires `Authorization: Bearer <token>` header. Response `Content-Type: text/event-stream`.
+- GET /groups
+- GET /groups/my
+- POST /groups
+- POST /groups/{id}/join
 
----
+Realtime (SSE)
 
-## Environment variables used by the server
+- GET /stream
+	- A Server-Sent Events endpoint that streams realtime messages and events.
+	- Include `Authorization: Bearer <token>` header when connecting.
+
+Environment variables
+---------------------
 
 - `DATABASE_URL` — SQLAlchemy connection string. Examples:
-  - Local sqlite: `sqlite:///./messenger.db`
-  - Postgres: `postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME`
-- `ALLOWED_ORIGINS` — comma-separated origins for CORS (e.g. `http://localhost:5173,https://app.example.com`).
-- `PORT` — optional port used by the `Procfile` or container runtime.
+	- SQLite local: `sqlite:///./messenger.db`
+	- Postgres: `postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME`
+- `ALLOWED_ORIGINS` — comma-separated list for CORS (e.g. `http://localhost:5173,https://app.example.com`)
+- `PORT` — optional port used by hosting environment
 
----
+Run locally (backend)
+---------------------
 
-## Exact commands — local development
+Prerequisites: Python 3.11+, Node.js (for frontend)
 
-Backend (PowerShell commands):
+Example (PowerShell):
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-# run server with sqlite
+# for local development, use SQLite
 $env:DATABASE_URL = 'sqlite:///./messenger.db'
 uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Frontend (PowerShell):
+Run frontend (development)
+--------------------------
 
 ```powershell
 cd client-app
@@ -307,43 +135,58 @@ npm install
 npm run dev
 ```
 
-Build frontend with production API base URL:
+Build frontend for production (example)
+--------------------------------------
 
 ```powershell
 cd client-app
 VITE_API_URL=https://api.example.com/ npm run build
 ```
 
-Docker — build and run backend container:
+Database migrations (Alembic)
+----------------------------
+
+```powershell
+alembic upgrade head
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```
+
+Docker (simple)
+---------------
+
+Build and run a container (example):
 
 ```powershell
 docker build -t secure-messenger:latest .
 docker run -e DATABASE_URL="sqlite:///./messenger.db" -p 8000:8000 secure-messenger:latest
 ```
 
-Alembic migrations (run where `alembic` is available and `DATABASE_URL` is set):
+Deployment notes
+----------------
+
+- For production use Postgres (set `DATABASE_URL` accordingly) and ensure `psycopg2` or `psycopg2-binary` is available.
+- Replace the in-process broadcaster with Redis Pub/Sub for multi-instance SSE delivery.
+- Run Alembic migrations during deployment.
+
+Testing
+-------
+
+The repository includes a `tests/` folder with pytest-based tests. Use `pytest` to run the test suite locally. For deterministic tests that touch the database, the project uses test fixtures (see `tests/conftest.py`) to create a temporary database and override FastAPI dependencies.
+
+Basic commands (PowerShell):
 
 ```powershell
-alembic upgrade head
+# run all tests
+pytest -q
+
+# run a single test file
+pytest tests/test_app.py -q
 ```
 
----
+Tips
+- Use the `tests/conftest.py` fixtures rather than hitting your development database.
+- To run tests that need a Postgres instance, set `DATABASE_URL` to a test database and ensure migrations have been applied.
 
-## Notes on realtime (SSE) implementation
 
-- The backend publishes message events to an in-process `broadcaster` when messages are created.
-- The `/stream` endpoint subscribes to the broadcaster and sends matching events to the connected client as SSE (`text/event-stream`).
-- For horizontal scaling, a central broker (Redis Pub/Sub or similar) is required so events published on one instance are received by subscribers connected to other instances.
 
----
-
-## Minimal troubleshooting
-
-- If the backend cannot connect to the DB: confirm `DATABASE_URL`, network access, and DB credentials.
-- If `psycopg2` fails to install on some platforms: either install OS-level libpq headers or use `psycopg2-binary` in `requirements.txt`.
-- If SSE appears buffered by a proxy: verify load balancer/reverse proxy streaming config.
-
----
-
-If specific sections must be expanded into exact request/response examples or the full API JSON schemas, list which endpoints you want expanded and the README will be updated with those exact examples.
-- The endpoint returns a `StreamingResponse` with `text/event-stream` and headers that prevent buffering by reverse proxies.
