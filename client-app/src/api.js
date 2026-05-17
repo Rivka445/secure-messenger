@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/' })
+// Vite exposes env vars as import.meta.env.VITE_*
+const BASE = import.meta.env?.VITE_API_URL || '/'
+const api = axios.create({ baseURL: BASE })
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
@@ -9,7 +11,7 @@ api.interceptors.request.use((config) => {
 })
 
 export const login = async (username, password) => {
-  const { data } = await axios.post('/login', { username, password })
+  const { data } = await axios.post(`${BASE}login`, { username, password })
   localStorage.setItem('token', data.access_token)
   localStorage.setItem('username', username)
   return data

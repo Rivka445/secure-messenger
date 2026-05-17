@@ -1,9 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
+import os
 
-DATABASE_URL = "sqlite:///./messenger.db"
+# Use DATABASE_URL environment variable (e.g. for RDS). Fall back to sqlite for local dev.
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///./messenger.db')
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=False)
+# If using sqlite, set check_same_thread; for other DBs this arg should not be provided.
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith('sqlite') else {}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args, echo=False)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 

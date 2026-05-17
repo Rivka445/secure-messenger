@@ -33,9 +33,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+import os
+
+# Configure CORS origins via ALLOWED_ORIGINS env var (comma-separated). Defaults to localhost dev origin.
+allowed = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5173')
+allow_origins = [o.strip() for o in allowed.split(',') if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
