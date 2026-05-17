@@ -83,15 +83,9 @@ export default function Home() {
     setError('')
     try {
       if (active.type === 'dm') {
-        const msg = await sendMessage(active.partner, content)
-        setAllMessages((prev) => [...prev, msg])
+        await sendMessage(active.partner, content)
       } else {
-        const msg = await sendGroupMessage(active.group.id, content)
-        setGroupMessages((prev) => {
-          const existing = prev[active.group.id] || []
-          if (existing.find((m) => m.id === msg.id)) return prev
-          return { ...prev, [active.group.id]: [...existing, msg] }
-        })
+        await sendGroupMessage(active.group.id, content)
       }
       setContent('')
     } catch (err) {

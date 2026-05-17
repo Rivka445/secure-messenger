@@ -51,6 +51,7 @@ class MessageService:
         # Build payload for single publish (consumers will check membership)
         payload = {
             "type": "group",
+            "id": msg.id,
             "group_id": group_id,
             "sender": sender,
             "content": content,
@@ -62,10 +63,6 @@ class MessageService:
         # broadcaster.publish is synchronous (puts into thread-safe queue).
         # Run it in a thread so we don't await a non-coroutine (would raise TypeError).
         await asyncio.to_thread(broadcaster.publish, payload)
-        # give the event loop a moment to schedule the SSE generator so the
-        # test client can observe the message before the POST response finishes
-        # increased slightly to reduce flakiness in tests
-        await asyncio.sleep(0.2)
         log.info("Published group message %s to group %s by %s", msg.id, group_id, sender)
 
         # reuse MessageResponse for shape (may create GroupMessageResponse later)

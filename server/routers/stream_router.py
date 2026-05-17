@@ -26,6 +26,7 @@ async def message_stream(username: str = Depends(require_auth), group_repo: Grou
                 try:
                     message = await asyncio.to_thread(q.get, True, 1.0)
                 except std_queue.Empty:
+                    yield ': keepalive\n\n'
                     continue
 
                 if message.get("type") == "group":
@@ -52,4 +53,4 @@ async def message_stream(username: str = Depends(require_auth), group_repo: Grou
         finally:
             broadcaster.unsubscribe(q)
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 export default function useStream(onMessage) {
   const onMessageRef = useRef(onMessage)
+  const seenIds = useRef(new Set())
   onMessageRef.current = onMessage
 
   useEffect(() => {
@@ -40,6 +41,9 @@ export default function useStream(onMessage) {
               try {
                 const parsed = JSON.parse(line.slice(6))
                 console.log('[SSE] Message received:', parsed)
+                const key = parsed.id != null ? `${parsed.type ?? 'dm'}-${parsed.id}` : null
+                if (key && seenIds.current.has(key)) continue
+                if (key) seenIds.current.add(key)
                 onMessageRef.current(parsed)
               } catch (e) {
                 console.error('[SSE] Parse error:', e)
@@ -49,6 +53,10 @@ export default function useStream(onMessage) {
         }
       } catch (e) {
         if (e.name !== 'AbortError') console.error('[SSE] Error:', e)
+      }
+      if (active) {
+        console.log('[SSE] Reconnecting in 2s...')
+        setTimeout(connect, 2000)
       }
     }
 
