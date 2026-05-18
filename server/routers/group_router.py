@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, status
 from server.schemas import (
     CreateGroupRequest,
     GroupResponse,
-    JoinRequestBody,
-    JoinRequestResponse,
+    JoinGroupRequest,
+    JoinGroupResponse,
     GroupMessageRequest,
     MessageResponse,
 )
@@ -47,61 +47,16 @@ def create_group(
     return GroupResponse(**g)
 
 
-@router.post("/groups/{group_id}/join", response_model=JoinRequestResponse, status_code=status.HTTP_201_CREATED)
-def request_join(
+@router.post("/groups/{group_id}/join", response_model=JoinGroupResponse)
+def join_group(
     group_id: int,
-    body: JoinRequestBody,
+    body: JoinGroupRequest,
     username: str = Depends(require_auth),
     service: GroupService = Depends(get_group_service),
-) -> JoinRequestResponse:
-    """Request to join a group. If the group has a password, provide it in the body."""
-    r = service.request_join(group_id, username, body.password, body.message)
-    return JoinRequestResponse(**r)
-
-
-@router.get("/groups/{group_id}/join-requests", response_model=List[JoinRequestResponse])
-def list_join_requests(
-    group_id: int,
-    username: str = Depends(require_auth),
-    group_repo = Depends(get_group_repo),
-) -> List[JoinRequestResponse]:
-    """List pending join requests for a group. Only the group owner should call this."""
-    # Simple enforcement: verify caller is owner
-    group = group_repo.get_by_id(group_id)
-    if not group:
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=404, detail="group not found")
-    if group.owner != username:
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=403, detail="only owner can list requests")
-    reqs = group_repo.list_join_requests(group_id)
-    return [JoinRequestResponse(**r.__dict__) for r in reqs]
-
-
-@router.post("/groups/{group_id}/join-requests/{request_id}/approve", response_model=JoinRequestResponse)
-def approve_request(
-    group_id: int,
-    request_id: int,
-    username: str = Depends(require_auth),
-    service: GroupService = Depends(get_group_service),
-) -> JoinRequestResponse:
-    """Approve a pending join request. Only the group owner can approve."""
-    r = service.approve_request(request_id, username)
-    return JoinRequestResponse(**r)
-
-
-@router.post("/groups/{group_id}/join-requests/{request_id}/reject", response_model=JoinRequestResponse)
-def reject_request(
-    group_id: int,
-    request_id: int,
-    username: str = Depends(require_auth),
-    service: GroupService = Depends(get_group_service),
-) -> JoinRequestResponse:
-    """Reject a pending join request. Only the group owner can reject."""
-    r = service.reject_request(request_id, username)
-    return JoinRequestResponse(**r)
+) -> JoinGroupResponse:
+    """Join a group immediately. If the group has a password, provide it in the body."""
+    result = service.join_group(group_id, username, body.password)
+    return JoinGroupResponse(**result)
 
 
 @router.get("/groups/{group_id}/messages")

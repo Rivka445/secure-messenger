@@ -36,53 +36,28 @@ class GroupService:
             "created_at": group.created_at,
         }
 
-    def request_join(self, group_id: int, username: str, password: Optional[str], message: Optional[str]) -> dict:
+    def join_group(self, group_id: int, username: str, password: Optional[str]) -> dict:
+        """Join a group immediately if password is correct."""
         group = self._groups.get_by_id(group_id)
         if not group:
             raise app_exceptions.NotFoundError("group not found")
+        
         if self._groups.is_member(group_id, username):
-            return {"id": 0, "status": "approved"}
-        provided_ok = False
+            raise app_exceptions.BadRequestError("already a member")
+        
+        # Check password
         if group.join_password_hash:
             if not password:
-                provided_ok = False
-            else:
-                provided_ok = verify_password(password, group.join_password_hash)
-        else:
-            provided_ok = True
-        req = self._groups.create_join_request(group_id, username, message, provided_ok)
-        if provided_ok:
-            self._groups.add_member(group_id, username)
-            self._groups.update_join_request_status(req.id, "approved", processed_by="auto")
-            req.status = "approved"
-        log.info("User %s requested to join group %s (request_id=%s, auto_approved=%s)", username, group_id, req.id, provided_ok)
-        return {"id": req.id, "status": req.status}
-
-    def approve_request(self, request_id: int, approver: str) -> dict:
-        req = self._groups.get_join_request(request_id)
-        if not req:
-            raise app_exceptions.NotFoundError("request not found")
-        # Only group owner/admin should approve — simple check
-        group = self._groups.get_by_id(req.group_id)
-        if group.owner != approver:
-            raise app_exceptions.ForbiddenError("only owner can approve")
-        # add member
-        self._groups.add_member(req.group_id, req.username)
+                raise app_exceptions.UnauthorizedError("password required")
+            if not verify_password(password, group.join_password_hash):
+                raise app_exceptions.UnauthorizedError("incorrect password")
+        
+        # Add member immediately
+        self._groups.add_member(group_id, username)
         try:
-            membership_cache.invalidate(req.group_id, req.username)
+            membership_cache.invalidate(group_id, username)
         except Exception:
-            log.debug("Failed to invalidate cache after approving request %s", request_id)
-        updated = self._groups.update_join_request_status(request_id, "approved", processed_by=approver)
-        log.info("Join request %s approved by %s", request_id, approver)
-        return {"id": updated.id, "status": updated.status}
-
-    def reject_request(self, request_id: int, approver: str) -> dict:
-        req = self._groups.get_join_request(request_id)
-        if not req:
-            raise app_exceptions.NotFoundError("request not found")
-        group = self._groups.get_by_id(req.group_id)
-        if group.owner != approver:
-            raise app_exceptions.ForbiddenError("only owner can reject")
-        updated = self._groups.update_join_request_status(request_id, "rejected", processed_by=approver)
-        log.info("Join request %s rejected by %s", request_id, approver)
-        return {"id": updated.id, "status": updated.status}
+            log.debug("Failed to invalidate membership cache for %s in %s", username, group_id)
+        
+        log.info("User %s joined group %s", username, group_id)
+        return {"success": True, "message": "joined successfully"}

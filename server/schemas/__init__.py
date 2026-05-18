@@ -3,7 +3,7 @@ from .message_schemas import SendMessageRequest, MessageResponse
 from .group_schemas import (
 	CreateGroupRequest,
 	GroupResponse,
-	JoinRequestBody,
-	JoinRequestResponse,
+	JoinGroupRequest,
+	JoinGroupResponse,
 	GroupMessageRequest,
 )

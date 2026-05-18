@@ -17,15 +17,13 @@ class GroupResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class JoinRequestBody(BaseModel):
+class JoinGroupRequest(BaseModel):
     password: Optional[str] = None
-    message: Optional[str] = None
 
 
-class JoinRequestResponse(BaseModel):
-    id: int
-    status: str
-    model_config = {"from_attributes": True}
+class JoinGroupResponse(BaseModel):
+    success: bool
+    message: str
 
 
 class GroupMessageRequest(BaseModel):

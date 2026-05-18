@@ -24,6 +24,10 @@ class ConflictError(AppError):
     status_code = 409
 
 
+class UnauthorizedError(AppError):
+    status_code = 401
+
+
 class BadRequestError(AppError):
     status_code = 400
 
