@@ -69,6 +69,8 @@ async def message_stream(
 
                 if not isinstance(message.get("created_at"), str):
                     message["created_at"] = message["created_at"].isoformat()
+                # Emit a named event so clients can use addEventListener('message', ...)
+                yield f"event: message\n"
                 yield f"data: {json.dumps(message)}\n\n"
         except asyncio.CancelledError:
             log.info(f"Stream closed for user: {username}")

@@ -57,6 +57,17 @@ class AuthService:
         - On success returns a `TokenResponse` Pydantic model containing an access token.
         """
         user = self._repo.get_by_username(username)
-        if not user or not verify_password(password, user.password_hash):
+        # Mitigate timing-oracle based user enumeration by always performing a
+        # bcrypt.checkpw call. If the user is unknown, check against a fake
+        # constant hash so the time taken is similar to an existing user with
+        # a bad password.
+        from server.core.auth import FAKE_PASSWORD_HASH
+
+        if not user:
+            # perform fake check to consume bcrypt time
+            verify_password(password, FAKE_PASSWORD_HASH)
+            raise HTTPException(status_code=401, detail="invalid credentials")
+
+        if not verify_password(password, user.password_hash):
             raise HTTPException(status_code=401, detail="invalid credentials")
         return TokenResponse(access_token=create_access_token(username))

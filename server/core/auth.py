@@ -26,6 +26,14 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
+# A constant dummy bcrypt hash used to mitigate timing-oracle user enumeration
+# Attacks: when a username is unknown we still perform a bcrypt.checkpw against
+# this hash so the time taken for a failed login is similar to that of a known
+# username with an incorrect password. The actual value is generated once at
+# import time and not stored in source control.
+FAKE_PASSWORD_HASH = bcrypt.hashpw(b"not-a-real-user", bcrypt.gensalt()).decode()
+
+
 def create_access_token(username: str) -> str:
     """Create a JWT access token encoding the username and expiry.
 

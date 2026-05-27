@@ -35,14 +35,28 @@ app = FastAPI(
 
 import os
 
-# Configure CORS origins via ALLOWED_ORIGINS env var (comma-separated). Defaults to localhost dev origin.
+# Configure CORS origins via ALLOWED_ORIGINS env var (comma-separated).
+# Defaults to the local dev origin used by the React app.
 allowed = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5173')
-allow_origins = [o.strip() for o in allowed.split(',') if o.strip()]
+raw_origins = [o.strip() for o in allowed.split(',') if o.strip()]
+
+# Support a wildcard '*' to allow any origin. If wildcard is used, disallow
+# credentialed requests (browsers reject Access-Control-Allow-Credentials: true
+# with a wildcard origin). Prefer listing explicit origins in production.
+if len(raw_origins) == 1 and raw_origins[0] == '*':
+    allow_origins = ['*']
+    allow_credentials = False
+    logger.warning("CORS configured with wildcard '*' origin. Credentials are disabled.")
+else:
+    allow_origins = raw_origins
+    allow_credentials = True
+
+logger.info("CORS allowed origins=%s allow_credentials=%s", allow_origins, allow_credentials)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

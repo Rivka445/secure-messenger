@@ -239,5 +239,17 @@ Tips
 - Use the `tests/conftest.py` fixtures rather than hitting your development database.
 - To run tests that need a Postgres instance, set `DATABASE_URL` to a test database and ensure migrations have been applied.
 
+Security notes (login enumeration / timing oracle)
+-----------------------------------------------
+
+- The authentication flow mitigates timing-oracle user enumeration by performing a
+	bcrypt check even when a username is not found, reducing the time difference
+	between "unknown user" and "wrong password" responses. This makes it harder
+	for attackers to enumerate valid usernames via timing measurements.
+- Rate-limit the `/login` endpoint in production (IP and account based) to
+	prevent brute-force and enumeration attacks. Use a reverse-proxy or API
+	gateway (e.g., AWS ALB, Cloudflare, Nginx) or an application middleware to
+	enforce throttling.
+
 
 
