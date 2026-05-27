@@ -3,10 +3,11 @@ import json
 import logging
 import queue as std_queue
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from server.core.auth import require_auth
+from server.core.auth import decode_access_token
 from server.core.broadcaster import broadcaster
 from server.repositories import GroupRepository
 from server.dependencies import get_group_repo
@@ -15,9 +16,30 @@ from server.core.membership_cache import membership_cache
 log = logging.getLogger(__name__)
 router = APIRouter(tags=["stream"])
 
+_optional_bearer = HTTPBearer(auto_error=False)
+
+
+def _resolve_username(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_optional_bearer),
+    token: str | None = Query(default=None),
+) -> str:
+    """Resolve authenticated username from Bearer header or ?token= query param.
+
+    Bearer header takes priority. Falls back to ?token= for browser EventSource
+    clients that cannot set custom headers (known trade-off: token appears in logs).
+    """
+    if credentials:
+        return decode_access_token(credentials.credentials)
+    if token:
+        return decode_access_token(token)
+    raise HTTPException(status_code=403, detail="Not authenticated")
+
 
 @router.get("/stream")
-async def message_stream(username: str = Depends(require_auth), group_repo: GroupRepository = Depends(get_group_repo)):
+async def message_stream(
+    username: str = Depends(_resolve_username),
+    group_repo: GroupRepository = Depends(get_group_repo),
+):
     q: std_queue.Queue = broadcaster.subscribe()
 
     async def event_generator():
