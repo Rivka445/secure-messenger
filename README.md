@@ -180,6 +180,31 @@ Notes and recommendations
 - Store sensitive values (DB password, SECRET_KEY) in Secrets Manager or Parameter Store rather than plaintext env vars in your repo.
 - Make sure to run Alembic migrations after deploying so the database schema is up-to-date. You can run migrations as a pre-start step in your container or via a CI job.
 
+Design decisions & trade-offs
+---------------------------
+
+This section explains the rationale behind the main technology choices in the project and known trade-offs. It documents what a production deployment should change or improve.
+
+- Why bcrypt for password hashing
+	- bcrypt is a proven, memory- and CPU‑bound password hash designed to slow offline brute‑force attacks. It provides an adjustable cost factor so you can increase work as hardware improves. Avoid fast hashes (SHA256, MD5) for passwords because they're too cheap for attackers.
+
+- Why AES‑GCM (authenticated encryption) instead of AES‑CBC
+	- AES‑GCM provides authenticated encryption: confidentiality and integrity in one primitive. That means ciphertext tampering is detected automatically. AES‑CBC requires additional authentication (HMAC) to safely detect tampering and is more error‑prone if implemented incorrectly. GCM is also efficient and widely supported. The main trade‑off is careful nonce management — never reuse a nonce with the same key.
+
+- Why SSE (Server‑Sent Events) over WebSockets
+	- SSE is a simple HTTP-based mechanism for server→client streaming with automatic reconnection and is easy to proxy and scale for one‑way notifications. This project only needs server→client updates for most flows, so SSE keeps the implementation and auth model simpler. WebSockets are better for full duplex, low‑latency two‑way interactions but add complexity (connection lifecycle, proxying, sticky sessions). If you need two‑way chat or very high throughput, consider switching to WebSockets or a dedicated messaging layer.
+
+- What breaks on server restart (and why)
+	- The in‑process broadcaster keeps subscriber queues and any in‑memory state inside the running process. On restart or when scaling to multiple instances those in‑memory queues are lost and active SSE connections drop. To avoid lost events in production you must replace the in‑process broadcaster with an external pub/sub (Redis, NATS, Kafka) and use graceful connection draining when rolling restarts.
+
+- Production checklist (short)
+	- Use Postgres or another production RDBMS (not SQLite) and run Alembic migrations as part of deployment.
+	- Replace the in‑process broadcaster with Redis pub/sub (or another message broker) to support multiple instances and durable delivery where needed.
+	- Store secrets in a managed service (Secrets Manager, Vault) and rotate them.
+	- Configure logging, monitoring and alerting; use structured logs or a log aggregator for production traces.
+	- Add graceful shutdown / connection draining in front of rolling deploys to reduce dropped SSE connections.
+
+
 Client / frontend notes
 - The frontend reads `VITE_API_URL` at build time (see `client-app/src/api.js`). When building your production frontend, set `VITE_API_URL=https://api.yourdomain.com` so the compiled JS points to the production API.
 
