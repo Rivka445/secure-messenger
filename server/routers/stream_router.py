@@ -72,6 +72,7 @@ async def message_stream(
                 yield f"data: {json.dumps(message)}\n\n"
         except asyncio.CancelledError:
             log.info(f"Stream closed for user: {username}")
+            raise
         finally:
             broadcaster.unsubscribe(q)
 
