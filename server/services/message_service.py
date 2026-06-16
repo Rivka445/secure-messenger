@@ -1,6 +1,5 @@
 from typing import Protocol
 import logging
-import asyncio
 
 from server.repositories import IUserRepository, IMessageRepository, GroupRepository
 from server.core.crypto import encrypt, decrypt
@@ -40,8 +39,7 @@ class MessageService:
         to the broadcaster. The broadcaster consumers (SSE) will filter by
         membership.
         """
-        # verify sender is member (run sync DB call in thread)
-        is_mem = await asyncio.to_thread(group_repo.is_member, group_id, sender)
+        is_mem = group_repo.is_member(group_id, sender)
         if not is_mem:
             raise app_exceptions.ForbiddenError("sender not a group member")
 
@@ -58,11 +56,7 @@ class MessageService:
             "created_at": msg.created_at,
         }
 
-        # publish immediately so subscribers receive the event while the
-        # request/connection is still active (helps tests and sync clients).
-        # broadcaster.publish is synchronous (puts into thread-safe queue).
-        # Run it in a thread so we don't await a non-coroutine (would raise TypeError).
-        await asyncio.to_thread(broadcaster.publish, payload)
+        broadcaster.publish(payload)
         log.info("Published group message %s to group %s by %s", msg.id, group_id, sender)
 
         # reuse MessageResponse for shape (may create GroupMessageResponse later)
@@ -99,9 +93,7 @@ class MessageService:
             created_at=msg.created_at,
         )
 
-        # Publish in background without blocking the event loop. Use to_thread
-        # because broadcaster.publish is synchronous.
-        asyncio.create_task(asyncio.to_thread(broadcaster.publish, response.model_dump()))
+        broadcaster.publish(response.model_dump())
         return response
 
     def get_messages(self, username: str) -> list[MessageResponse]:

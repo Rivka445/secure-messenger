@@ -37,5 +37,11 @@ class MembershipCache:
         key = (group_id, username)
         self._store.pop(key, None)
 
+    def invalidate_group(self, group_id: int) -> None:
+        """Remove all cached entries for a specific group."""
+        keys_to_remove = [k for k in self._store.keys() if k[0] == group_id]
+        for key in keys_to_remove:
+            self._store.pop(key, None)
+
 
 membership_cache = MembershipCache()

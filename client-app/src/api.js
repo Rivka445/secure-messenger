@@ -43,8 +43,8 @@ export const getGroupMessages = (groupId) =>
 export const createGroup = (name, join_password) =>
   api.post('/groups', { name, join_password }).then((r) => r.data)
 
-export const joinGroup = (groupId, password, message) =>
-  api.post(`/groups/${groupId}/join`, { password, message }).then((r) => r.data)
+export const joinGroup = (groupId, password) =>
+  api.post(`/groups/${groupId}/join`, { password }).then((r) => r.data)
 
 export const getJoinRequests = (groupId) =>
   api.get(`/groups/${groupId}/join-requests`).then((r) => r.data)

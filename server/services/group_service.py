@@ -54,10 +54,12 @@ class GroupService:
         
         # Add member immediately
         self._groups.add_member(group_id, username)
+        
+        # Invalidate entire group cache so all SSE streams will refresh membership
         try:
-            membership_cache.invalidate(group_id, username)
+            membership_cache.invalidate_group(group_id)
         except Exception:
-            log.debug("Failed to invalidate membership cache for %s in %s", username, group_id)
+            log.debug("Failed to invalidate membership cache for group %s", group_id)
         
         log.info("User %s joined group %s", username, group_id)
         return {"success": True, "message": "joined successfully"}

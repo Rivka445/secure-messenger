@@ -142,7 +142,7 @@ export default function Home() {
       const groups = await getAllGroups()
       const found = groups.find((g) => g.name.toLowerCase() === joinForm.search.trim().toLowerCase())
       if (!found) { setModalError('Group not found'); return }
-      const r = await joinGroup(found.id, joinForm.password || undefined)
+      const r = await joinGroup(found.id, joinForm.password || null)
       if (r.status === 'approved') {
         const updated = await getMyGroups()
         setMyGroups(updated)

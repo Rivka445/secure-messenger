@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 
+const BASE = import.meta.env?.VITE_API_URL || 'http://localhost:8000'
+
 export default function useStream(onMessage) {
   const onMessageRef = useRef(onMessage)
   const seenIds = useRef(new Set())
@@ -18,7 +20,7 @@ export default function useStream(onMessage) {
     async function connect() {
       console.log('[SSE] Connecting...')
       try {
-        const res = await fetch('http://localhost:8000/stream', {
+        const res = await fetch(`${BASE}/stream`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         })
